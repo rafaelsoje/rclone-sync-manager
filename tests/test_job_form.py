@@ -14,7 +14,7 @@ def test_job_form_dialog_constructs() -> None:
     app = QApplication.instance() or QApplication([])
     dialog = JobFormDialog()
 
-    assert dialog.windowTitle() == "Adicionar job"
+    assert dialog.windowTitle() == "Adicionar sincronização"
 
 
 def test_new_job_runs_on_startup_and_after_save_by_default() -> None:

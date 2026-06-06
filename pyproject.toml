@@ -21,6 +21,9 @@ rsm = "rclone_sync_manager.cli:main"
 [tool.setuptools.packages.find]
 include = ["rclone_sync_manager*"]
 
+[tool.setuptools.package-data]
+rclone_sync_manager = ["assets/*.svg"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

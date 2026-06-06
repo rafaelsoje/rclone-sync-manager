@@ -49,6 +49,7 @@ def run_service() -> int:
 def run_gui(*, start_hidden: bool = False) -> int:
     try:
         from PySide6.QtCore import QLockFile, QTimer
+        from PySide6.QtGui import QIcon
         from PySide6.QtWidgets import QApplication, QMessageBox
     except ImportError as exc:
         raise SystemExit("PySide6 is not installed. Install requirements first.") from exc
@@ -56,9 +57,12 @@ def run_gui(*, start_hidden: bool = False) -> int:
     from .gui.main_window import MainWindow
     from .gui.theme import apply_theme
     from .gui.tray import TrayIcon
+    from .resources import app_icon_path
 
     db = init_default_database()
     app = QApplication([])
+    icon = QIcon(str(app_icon_path()))
+    app.setWindowIcon(icon)
     app.setQuitOnLastWindowClosed(False)
     apply_theme(db.get_setting("theme", "system") or "system")
     instance_lock = QLockFile(str(ensure_app_dirs().state_dir / "gui.lock"))
@@ -97,6 +101,7 @@ def run_gui(*, start_hidden: bool = False) -> int:
 
     app.aboutToQuit.connect(stop_runtime)
     window = MainWindow()
+    window.setWindowIcon(icon)
     window.runtime_timer = runtime_timer
     tray = TrayIcon(window)
     tray.show()

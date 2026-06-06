@@ -67,7 +67,7 @@ class LogViewerDialog(QDialog):
     def refresh(self) -> None:
         job_name = self.job_combo.currentText()
         if not job_name:
-            self.log_text.setPlainText("Nenhum job selecionado.")
+            self.log_text.setPlainText("Nenhuma sincronização selecionada.")
             return
         log_file = self.paths.job_log_dir / f"{safe_filename(job_name)}.log"
         if not log_file.exists():

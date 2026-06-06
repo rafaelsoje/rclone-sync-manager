@@ -175,9 +175,9 @@ class MainWindow(QMainWindow):
         self.right_tabs.addTab(history_group, "Histórico")
         self.right_tabs.addTab(recent_log_group, "Log")
 
-        self.add_button = QPushButton("Adicionar job")
-        self.edit_button = QPushButton("Editar job")
-        self.remove_button = QPushButton("Remover job")
+        self.add_button = QPushButton("Adicionar")
+        self.edit_button = QPushButton("Editar")
+        self.remove_button = QPushButton("Remover")
         self.pause_button = QPushButton("Pausar")
         self.resume_button = QPushButton("Retomar")
         self.stop_button = QPushButton("Parar")
@@ -216,7 +216,7 @@ class MainWindow(QMainWindow):
         self.status_filter_combo.currentTextChanged.connect(self.refresh)
 
         button_row = QHBoxLayout()
-        job_group = QGroupBox("Jobs")
+        job_group = QGroupBox("Sincronizações")
         job_buttons = QHBoxLayout()
         for button in (self.add_button, self.edit_button, self.remove_button):
             job_buttons.addWidget(button)
@@ -251,10 +251,10 @@ class MainWindow(QMainWindow):
         filter_row.addWidget(QLabel("Status"))
         filter_row.addWidget(self.status_filter_combo)
 
-        self.empty_label = QLabel("Nenhum job configurado")
+        self.empty_label = QLabel("Nenhuma sincronização configurada")
         self.empty_label.setAlignment(Qt.AlignCenter)
         self.empty_label.setStyleSheet("font-size: 18px; font-weight: 600;")
-        self.empty_add_button = QPushButton("Adicionar primeiro job")
+        self.empty_add_button = QPushButton("Adicionar primeira sincronização")
         self.empty_add_button.clicked.connect(self.add_job)
         empty_layout = QVBoxLayout()
         empty_layout.addStretch()
@@ -308,11 +308,11 @@ class MainWindow(QMainWindow):
         filtered_jobs = [job for job in jobs if self._job_matches_filters(job)]
         self.table_stack.setCurrentIndex(0 if filtered_jobs else 1)
         if not jobs:
-            self.empty_label.setText("Nenhum job configurado")
-            self.empty_add_button.setText("Adicionar primeiro job")
+            self.empty_label.setText("Nenhuma sincronização configurada")
+            self.empty_add_button.setText("Adicionar primeira sincronização")
         else:
-            self.empty_label.setText("Nenhum job encontrado")
-            self.empty_add_button.setText("Adicionar job")
+            self.empty_label.setText("Nenhuma sincronização encontrada")
+            self.empty_add_button.setText("Adicionar")
         self.table.setRowCount(len(filtered_jobs))
         selected_restored = False
         for row, job in enumerate(filtered_jobs):
@@ -381,8 +381,8 @@ class MainWindow(QMainWindow):
             return
         if QMessageBox.question(
             self,
-            "Remover job",
-            f"Remover o job {job.name}?",
+            "Remover sincronização",
+            f"Remover a sincronização {job.name}?",
             QMessageBox.Cancel | QMessageBox.Yes,
             QMessageBox.Cancel,
         ) != QMessageBox.Yes:

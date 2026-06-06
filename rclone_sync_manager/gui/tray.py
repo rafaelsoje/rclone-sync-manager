@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QApplication, QMenu, QStyle, QSystemTrayIcon
+from PySide6.QtWidgets import QMenu, QSystemTrayIcon
+
+from ..resources import app_icon_path
 
 
 class TrayIcon(QSystemTrayIcon):
     def __init__(self, window) -> None:
-        icon = QApplication.style().standardIcon(QStyle.SP_DriveNetIcon)
+        icon = QIcon(str(app_icon_path()))
         super().__init__(icon, window)
         self.window = window
         self.setToolTip("Rclone Sync Manager")

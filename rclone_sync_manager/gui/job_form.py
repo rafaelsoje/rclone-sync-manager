@@ -31,7 +31,7 @@ class JobFormDialog(QDialog):
     def __init__(self, parent=None, job: Job | None = None) -> None:
         super().__init__(parent)
         self.job = job
-        self.setWindowTitle("Editar job" if job else "Adicionar job")
+        self.setWindowTitle("Editar sincronização" if job else "Adicionar sincronização")
         self.resize(640, 620)
 
         self.name_edit = QLineEdit()
@@ -105,7 +105,7 @@ class JobFormDialog(QDialog):
 
         basic_tab = QWidget()
         basic_form = QFormLayout()
-        basic_form.addRow("Nome do job", self.name_edit)
+        basic_form.addRow("Nome", self.name_edit)
         basic_form.addRow("Pasta local", local_row)
         basic_form.addRow("Selecionar remote", remote_row)
         basic_form.addRow("Remote rclone", self.remote_edit)

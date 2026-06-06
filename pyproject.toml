@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rclone-sync-manager"
+version = "0.1.0"
+description = "Desktop sync manager powered by rclone."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "PySide6>=6.6",
+  "watchdog>=4.0",
+  "PyYAML>=6.0",
+  "psutil>=5.9",
+]
+
+[project.scripts]
+rsm = "rclone_sync_manager.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["rclone_sync_manager*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

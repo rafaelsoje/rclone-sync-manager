@@ -1,0 +1,6 @@
+rclone_path: rclone
+max_parallel_jobs: 1
+notifications: true
+theme: system
+log_dir: ~/.local/share/rclone-sync-manager/logs
+state_dir: ~/.local/share/rclone-sync-manager/state

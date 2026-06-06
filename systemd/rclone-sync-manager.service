@@ -1,0 +1,14 @@
+[Unit]
+Description=Rclone Sync Manager
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/rsm start
+Restart=always
+RestartSec=10
+Nice=19
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=default.target

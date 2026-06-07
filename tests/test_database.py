@@ -134,6 +134,15 @@ def test_reconcile_interrupted_jobs_keeps_active_job_running(tmp_path: Path) -> 
     assert last_run["finished_at"] is None
 
 
+def test_set_job_status_ignores_missing_job(tmp_path: Path) -> None:
+    db = Database(tmp_path / "rsm.db")
+    db.initialize()
+
+    db.set_job_status(999, JobStatus.ERROR.value, "missing")
+
+    assert db.get_job_status(999) is None
+
+
 def test_remote_to_local_realtime_is_valid(tmp_path: Path) -> None:
     db = Database(tmp_path / "rsm.db")
     db.initialize()

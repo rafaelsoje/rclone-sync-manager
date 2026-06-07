@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Rclone Sync Manager main window screenshot</title>
+  <desc id="desc">Sanitized mock screenshot using sample paths and remotes.</desc>
+  <style>
+    text { font-family: Segoe UI, Arial, sans-serif; fill: #f8fafc; font-size: 14px; }
+    .muted { fill: #cbd5e1; }
+    .small { font-size: 12px; }
+    .title { font-size: 16px; font-weight: 600; }
+    .panel { fill: #333333; stroke: #555555; }
+    .bg { fill: #242424; }
+    .button { fill: #3f3f46; stroke: #71717a; }
+    .input { fill: #18181b; stroke: #3f3f46; }
+    .table-head { fill: #3a3a3a; }
+    .table-row { fill: #2f8acb; }
+    .progress-bg { fill: #171717; }
+    .progress { fill: #38bdf8; }
+  </style>
+  <rect class="bg" width="1280" height="720" rx="8"/>
+  <text x="18" y="30" class="title">Rclone Sync Manager</text>
+
+  <rect class="panel" x="16" y="48" width="260" height="74" rx="4"/>
+  <text x="28" y="70">Sincronizacoes</text>
+  <rect class="button" x="28" y="84" width="84" height="28" rx="3"/><text x="42" y="103">Adicionar</text>
+  <rect class="button" x="122" y="84" width="64" height="28" rx="3"/><text x="143" y="103">Editar</text>
+  <rect class="button" x="196" y="84" width="72" height="28" rx="3"/><text x="209" y="103">Remover</text>
+
+  <rect class="panel" x="288" y="48" width="370" height="74" rx="4"/>
+  <text x="300" y="70">Execucao</text>
+  <rect class="button" x="300" y="84" width="130" height="28" rx="3"/><text x="315" y="103">Sincronizar agora</text>
+  <rect class="button" x="440" y="84" width="74" height="28" rx="3"/><text x="459" y="103">Pausar</text>
+  <rect class="button" x="524" y="84" width="82" height="28" rx="3"/><text x="543" y="103">Retomar</text>
+  <rect class="button" x="616" y="84" width="58" height="28" rx="3"/><text x="633" y="103">Parar</text>
+
+  <rect class="panel" x="670" y="48" width="470" height="74" rx="4"/>
+  <text x="682" y="70">Ferramentas</text>
+  <rect class="button" x="682" y="84" width="70" height="28" rx="3"/><text x="701" y="103">Logs</text>
+  <rect class="button" x="762" y="84" width="130" height="28" rx="3"/><text x="776" y="103">Copiar diagnostico</text>
+  <rect class="button" x="902" y="84" width="70" height="28" rx="3"/><text x="918" y="103">Doctor</text>
+  <rect class="button" x="982" y="84" width="108" height="28" rx="3"/><text x="994" y="103">Configuracoes</text>
+
+  <text x="18" y="150">Filtro</text>
+  <rect class="input" x="62" y="132" width="840" height="28" rx="4"/>
+  <text x="74" y="151" class="muted">Buscar sincronizacao...</text>
+  <text x="926" y="150">Status</text>
+  <rect class="button" x="976" y="132" width="98" height="28" rx="4"/><text x="1002" y="151">Todos</text>
+
+  <rect class="panel" x="16" y="176" width="760" height="488"/>
+  <rect class="table-head" x="16" y="176" width="760" height="28"/>
+  <text x="42" y="195">Nome</text><text x="140" y="195">Pasta local</text><text x="330" y="195">Remoto</text>
+  <text x="430" y="195">Modo</text><text x="490" y="195">Status</text><text x="590" y="195">Resultado</text>
+  <rect class="table-row" x="16" y="204" width="760" height="30"/>
+  <text x="42" y="224">Projetos</text><text x="140" y="224">C:/Users/demo/Documents/Projetos</text>
+  <text x="330" y="224">drive:Projetos</text><text x="430" y="224">copy</text>
+  <text x="490" y="224">RODANDO</text><text x="590" y="224">running</text>
+
+  <rect class="panel" x="792" y="176" width="470" height="488"/>
+  <rect class="button" x="806" y="188" width="90" height="28" rx="3"/><text x="826" y="207">Detalhes</text>
+  <rect class="button" x="900" y="188" width="90" height="28" rx="3"/><text x="918" y="207">Historico</text>
+  <rect class="button" x="994" y="188" width="64" height="28" rx="3"/><text x="1015" y="207">Log</text>
+  <text x="816" y="240">Nome</text><text x="940" y="240">Projetos</text>
+  <text x="816" y="268">Status</text><rect x="940" y="250" width="292" height="22" rx="4" fill="#fef3c7"/><text x="952" y="266" fill="#111827">running</text>
+  <text x="816" y="296">Pasta local</text><text x="940" y="296">C:/Users/demo/Documents/Projetos</text>
+  <text x="816" y="324">Remoto</text><text x="940" y="324">drive:Projetos</text>
+  <text x="816" y="352">Direcao</text><text x="940" y="352">Remote -&gt; Local</text>
+  <text x="816" y="408">Progresso</text><rect class="progress-bg" x="940" y="394" width="292" height="14" rx="4"/><rect class="progress" x="940" y="394" width="174" height="14" rx="4"/>
+  <text x="816" y="436">Andamento</text><text x="940" y="436">60% | 720 MiB / 1.2 GiB | 8.2 MiB/s | ETA 1m</text>
+  <text x="816" y="464">Ultimo erro</text><text x="940" y="464">-</text>
+
+  <text x="18" y="700" class="small">Sincronizacoes: 1 | Rodando: 1 | Erros: 0 | Pausados: 0 | Auto-refresh ativo</text>
+</svg>

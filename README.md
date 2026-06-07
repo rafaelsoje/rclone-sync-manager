@@ -1,11 +1,24 @@
 # Rclone Sync Manager
 
+[![Tests](https://github.com/rafaelsoje/rclone-sync-manager/actions/workflows/tests.yml/badge.svg)](https://github.com/rafaelsoje/rclone-sync-manager/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Aplicativo desktop para gerenciar sincronizações locais usando `rclone`, com suporte a
 Linux e Windows.
 
 Ele oferece GUI em PySide6, tray icon, CLI `rsm`, fila de execução, watcher realtime,
 agendamento simples, logs por job, histórico em SQLite, autostart da tray e integração
 opcional com `systemd --user` no Linux.
+
+## Screenshots
+
+As imagens abaixo usam dados de exemplo, sem caminhos, nomes de usuario ou remotes reais.
+
+![Janela principal](docs/screenshots/main-window.svg)
+
+![Configuracoes](docs/screenshots/settings.svg)
+
+![Adicionar sincronizacao](docs/screenshots/add-sync.svg)
 
 ## Requisitos
 

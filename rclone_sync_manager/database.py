@@ -332,13 +332,14 @@ class Database:
         conn.execute(
             """
             INSERT INTO job_state(job_id, status, message, updated_at)
-            VALUES(?, ?, ?, ?)
+            SELECT ?, ?, ?, ?
+            WHERE EXISTS (SELECT 1 FROM jobs WHERE id = ?)
             ON CONFLICT(job_id) DO UPDATE SET
                 status = excluded.status,
                 message = excluded.message,
                 updated_at = excluded.updated_at
             """,
-            (job_id, status, message, now_iso()),
+            (job_id, status, message, now_iso(), job_id),
         )
 
     def get_last_job_run(self, job_id: int) -> sqlite3.Row | None:

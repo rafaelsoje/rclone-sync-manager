@@ -71,8 +71,9 @@ class QueueManager:
             try:
                 if job.id is not None:
                     fresh_job = self.db.get_job_by_id(job.id)
-                    if fresh_job is not None:
-                        job = fresh_job
+                    if fresh_job is None:
+                        continue
+                    job = fresh_job
                     self.db.set_job_status(job.id, JobStatus.RUNNING.value)
                 result = self.runner.run(job)
                 if job.id is not None:

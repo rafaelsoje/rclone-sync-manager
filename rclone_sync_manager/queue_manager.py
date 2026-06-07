@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import queue
-import signal
 import threading
 
 from .database import Database
 from .models import Job, JobStatus
-from .runner import RcloneRunner
+from .runner import RcloneRunner, STOPPED_EXIT_CODES
 
 
 class QueueManager:
@@ -104,6 +103,6 @@ class QueueManager:
 def _status_from_exit_code(exit_code: int) -> str:
     if exit_code == 0:
         return JobStatus.SUCCESS.value
-    if exit_code in {-signal.SIGTERM, 128 + signal.SIGTERM}:
+    if exit_code in STOPPED_EXIT_CODES:
         return JobStatus.STOPPED.value
     return JobStatus.ERROR.value

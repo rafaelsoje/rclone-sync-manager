@@ -14,6 +14,8 @@ from .notifier import notify
 from .platform_utils import is_windows
 from .utils import safe_filename, shell_join
 
+STOPPED_EXIT_CODES = {-signal.SIGTERM, signal.SIGTERM, 128 + signal.SIGTERM}
+
 
 @dataclass(slots=True)
 class RunResult:
@@ -164,7 +166,7 @@ class RcloneRunner:
 def _status_from_exit_code(exit_code: int) -> str:
     if exit_code == 0:
         return JobStatus.SUCCESS.value
-    if exit_code in {-signal.SIGTERM, 128 + signal.SIGTERM}:
+    if exit_code in STOPPED_EXIT_CODES:
         return JobStatus.STOPPED.value
     return JobStatus.ERROR.value
 

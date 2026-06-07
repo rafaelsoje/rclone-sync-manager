@@ -38,7 +38,7 @@ from ..jobs_io import export_jobs, import_jobs
 from ..lock_manager import LockManager
 from ..models import Job, JobStatus
 from ..progress import progress_snapshot_from_log
-from ..runner import RcloneRunner
+from ..runner import RcloneRunner, STOPPED_EXIT_CODES
 from ..utils import safe_filename, shell_join
 from .doctor_dialog import DoctorDialog
 from .job_form import JobFormDialog
@@ -598,7 +598,7 @@ class MainWindow(QMainWindow):
         self.refresh()
         if exit_code == 0:
             QMessageBox.information(self, "Sincronização concluída", f"{job_name} finalizado com sucesso.")
-        elif exit_code in {-15, 143}:
+        elif exit_code in STOPPED_EXIT_CODES:
             QMessageBox.information(self, "Sincronização parada", f"{job_name} foi interrompido.")
         else:
             QMessageBox.warning(self, "Erro na sincronização", f"{job_name} retornou código {exit_code}.\n\n{detail}")

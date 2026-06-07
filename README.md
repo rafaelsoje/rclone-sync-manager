@@ -2,6 +2,10 @@
 
 [![Tests](https://github.com/rafaelsoje/rclone-sync-manager/actions/workflows/tests.yml/badge.svg)](https://github.com/rafaelsoje/rclone-sync-manager/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey)
+![GUI](https://img.shields.io/badge/GUI-PySide6-green)
+![Powered by rclone](https://img.shields.io/badge/Powered%20by-rclone-00ADD8)
 
 Aplicativo desktop para gerenciar sincronizações locais usando `rclone`, com suporte a
 Linux e Windows.

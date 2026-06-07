@@ -447,6 +447,20 @@ python -m venv .venv
 
 `pytest` é dependência de desenvolvimento. O aplicativo roda sem ele.
 
+## Releases
+
+O repositório tem um workflow de release para tags `v*`.
+
+Para publicar uma versão:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+O GitHub Actions roda os testes em Linux e Windows, gera o pacote Python (`sdist`/`wheel`)
+e publica um ZIP portátil para Windows na página de Releases.
+
 ## Desinstalação No Linux
 
 ```bash

@@ -41,12 +41,17 @@ if (-not (Test-Venv)) {
 $env:VIRTUAL_ENV = $VenvDir
 $env:PATH = "$(Join-Path $VenvDir 'Scripts');$env:PATH"
 
+$PreviousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 @'
 import pip
 import setuptools
 import wheel
 '@ | & $VenvPython - *> $null
-if ($LASTEXITCODE -ne 0) {
+$PipCheckExitCode = $LASTEXITCODE
+$ErrorActionPreference = $PreviousErrorActionPreference
+
+if ($PipCheckExitCode -ne 0) {
     & $VenvPython -m pip install --upgrade pip setuptools wheel
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE

@@ -296,6 +296,10 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._save_window_geometry()
+        if getattr(self, "tray", None) and self.tray.isVisible():
+            self.hide()
+            event.ignore()
+            return
         super().closeEvent(event)
 
     def refresh(self) -> None:

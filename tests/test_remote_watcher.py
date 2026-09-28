@@ -63,3 +63,25 @@ def test_remote_poller_enqueues_initial_snapshot(tmp_path: Path, monkeypatch) ->
     assert db.get_job_status_text(job.id) == "pending"
     assert not poller.handle_snapshot("file.txt;123;2026-05-14\n")
     assert poller.handle_snapshot("file.txt;124;2026-05-14\n")
+
+
+def test_remote_poller_manager_tracks_bisync_jobs(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    db = Database(tmp_path / "rsm.db")
+    db.initialize()
+    monkeypatch.setattr(remote_watcher, "RemotePoller", FakePoller)
+    manager = RemotePollerManager(QueueManager(db=db))
+    job = db.create_job(
+        Job(
+            name="BiSyncJob",
+            local_path=str(tmp_path),
+            remote_path="drive:Docs",
+            mode="bisync",
+            realtime=True,
+        )
+    )
+
+    manager.sync_jobs([job])
+    assert manager.watched_jobs() == {"BiSyncJob"}
+    manager.stop_all()

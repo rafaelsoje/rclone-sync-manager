@@ -31,7 +31,12 @@ class RemotePoller:
     def loop(self) -> None:
         interval = max(10, self.job.debounce_seconds)
         while not self._stop.is_set():
-            snapshot = remote_snapshot(self.job.remote_path, self.rclone_path)
+            snapshot = remote_snapshot(
+                self.job.remote_path,
+                self.rclone_path,
+                exclusions=self.job.ignore_patterns,
+                extra_flags=self.job.extra_flags,
+            )
             self.handle_snapshot(snapshot)
             self._stop.wait(interval)
 
@@ -64,7 +69,7 @@ class RemotePollerManager:
         wanted = {
             job.name: job
             for job in jobs
-            if job.enabled and job.realtime and job.direction == "remote_to_local"
+            if job.enabled and job.realtime and (job.direction == "remote_to_local" or job.mode == "bisync")
         }
         for job_name in list(self._pollers):
             if job_name not in wanted:
@@ -91,10 +96,27 @@ class RemotePollerManager:
         return set(self._pollers)
 
 
-def remote_snapshot(remote_path: str, rclone_path: str = "rclone") -> str | None:
+def remote_snapshot(
+    remote_path: str,
+    rclone_path: str = "rclone",
+    exclusions: list[str] | None = None,
+    extra_flags: list[str] | None = None,
+) -> str | None:
     try:
+        command = [rclone_path, "lsf", remote_path, "--recursive", "--format", "pst"]
+        if exclusions:
+            for pattern in exclusions:
+                if pattern.strip():
+                    command.extend(["--exclude", pattern.strip()])
+        if extra_flags:
+            import shlex
+
+            for flag in extra_flags:
+                if flag and flag.strip():
+                    parts = shlex.split(flag) if " " in flag else [flag]
+                    command.extend(part.strip() for part in parts if part.strip())
         completed = subprocess.run(
-            [rclone_path, "lsf", remote_path, "--recursive", "--format", "pst"],
+            command,
             check=False,
             capture_output=True,
             text=True,

@@ -28,6 +28,7 @@ JOB_FIELDS = [
     "notify",
     "ignore_patterns",
     "include_patterns",
+    "extra_flags",
 ]
 
 
@@ -62,4 +63,5 @@ def _job_from_dict(data: dict) -> Job:
     values = {field: data.get(field) for field in JOB_FIELDS}
     values["ignore_patterns"] = values.get("ignore_patterns") or []
     values["include_patterns"] = values.get("include_patterns") or []
+    values["extra_flags"] = values.get("extra_flags") or []
     return Job(**values)

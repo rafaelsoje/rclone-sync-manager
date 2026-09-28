@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import signal
+import shlex
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -61,6 +62,10 @@ class RcloneRunner:
                 command.extend(["--exclude", pattern.strip()])
         if any(pattern.strip() for pattern in job.include_patterns):
             command.extend(["--exclude", "**"])
+        for flag in job.extra_flags:
+            if flag and flag.strip():
+                parts = shlex.split(flag) if " " in flag else [flag]
+                command.extend(part.strip() for part in parts if part.strip())
         if job.dry_run:
             command.append("--dry-run")
         if job.mode == "bisync" and resync:

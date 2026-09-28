@@ -4,9 +4,14 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
-python -m compileall rclone_sync_manager tests
+PYTHON_BIN="python"
+if [[ -x ".venv/bin/python" ]]; then
+  PYTHON_BIN=".venv/bin/python"
+fi
 
-if python -m pytest -q; then
+"$PYTHON_BIN" -m compileall rclone_sync_manager tests
+
+if "$PYTHON_BIN" -m pytest -q; then
   exit 0
 fi
 

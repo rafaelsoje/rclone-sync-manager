@@ -50,6 +50,7 @@ class Job:
     notify: bool = True
     ignore_patterns: list[str] = field(default_factory=list)
     include_patterns: list[str] = field(default_factory=list)
+    extra_flags: list[str] = field(default_factory=list)
     created_at: str | None = None
     updated_at: str | None = None
 

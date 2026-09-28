@@ -1,7 +1,7 @@
-from __future__ import annotations
-
+import shlex
 from pathlib import Path
 
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QPlainTextEdit,
     QPushButton,
     QSpinBox,
     QTabWidget,
@@ -24,6 +25,7 @@ from PySide6.QtWidgets import (
 from ..config import DEFAULT_IGNORE_PATTERNS
 from ..models import Job
 from ..rclone_utils import join_remote_path, list_remotes, remote_exists, remote_name, split_remote_path
+from ..rules_manager import dump_conf_text, dump_json_text, parse_conf_text, parse_json_text
 from .remote_browser import RemoteBrowserDialog
 
 
@@ -128,11 +130,24 @@ class JobFormDialog(QDialog):
             execution_form.addRow("Ao salvar", self.start_after_save_check)
         execution_tab.setLayout(execution_form)
 
+        self.extra_flags_edit = QLineEdit()
+        self.extra_flags_edit.setPlaceholderText("Ex: --drive-skip-gdocs --fast-list --drive-chunk-size 64M")
+
+        flags_helpers = QHBoxLayout()
+        for flag in ["--drive-skip-gdocs", "--fast-list", "--drive-chunk-size 64M", "--resilient", "--bwlimit 10M"]:
+            btn = QPushButton(f"+ {flag}")
+            btn.setStyleSheet("font-size: 11px; padding: 2px 5px;")
+            btn.clicked.connect(lambda checked=False, f=flag: self._append_extra_flag(f))
+            flags_helpers.addWidget(btn)
+        flags_helpers.addStretch()
+
         advanced_tab = QWidget()
         advanced_form = QFormLayout()
         advanced_form.addRow("Dry-run", self.dry_run_check)
         advanced_form.addRow("Prioridade baixa", self.priority_check)
         advanced_form.addRow("Notificações", self.notify_check)
+        advanced_form.addRow("Flags Rclone extras", self.extra_flags_edit)
+        advanced_form.addRow("", flags_helpers)
         advanced_tab.setLayout(advanced_form)
 
         filters_tab = QWidget()
@@ -150,10 +165,55 @@ class JobFormDialog(QDialog):
         filters_layout.addWidget(self.ignore_edit)
         filters_tab.setLayout(filters_layout)
 
+        # Aba de Editor de Código (.conf / JSON)
+        code_tab = QWidget()
+        code_layout = QVBoxLayout()
+        code_top = QHBoxLayout()
+        code_top.addWidget(QLabel("Formato:"))
+        self.code_format_combo = QComboBox()
+        self.code_format_combo.addItems(["JSON", ".CONF (INI)"])
+        self.code_format_combo.currentTextChanged.connect(self._on_code_format_changed)
+        code_top.addWidget(self.code_format_combo)
+
+        btn_sync_from_form = QPushButton("Atualizar do Formulário")
+        btn_sync_from_form.clicked.connect(self._sync_code_from_form)
+        code_top.addWidget(btn_sync_from_form)
+
+        btn_apply_code = QPushButton("Aplicar no Formulário")
+        btn_apply_code.clicked.connect(self._apply_code_to_form)
+        code_top.addWidget(btn_apply_code)
+
+        code_top.addStretch()
+
+        btn_import_code = QPushButton("Importar...")
+        btn_import_code.clicked.connect(self._import_code_file)
+        code_top.addWidget(btn_import_code)
+
+        btn_export_code = QPushButton("Salvar Arquivo...")
+        btn_export_code.clicked.connect(self._export_code_file)
+        code_top.addWidget(btn_export_code)
+
+        code_layout.addLayout(code_top)
+
+        self.code_edit = QPlainTextEdit()
+        font = QFont("monospace")
+        font.setStyleHint(QFont.Monospace)
+        self.code_edit.setFont(font)
+        self.code_edit.setPlaceholderText("Escreva ou cole a regra aqui em JSON ou .CONF...")
+        code_layout.addWidget(self.code_edit)
+
+        self.code_status_label = QLabel("")
+        code_layout.addWidget(self.code_status_label)
+
+        code_tab.setLayout(code_layout)
+
+        self.tabs = tabs
         tabs.addTab(basic_tab, "Básico")
         tabs.addTab(execution_tab, "Execução")
         tabs.addTab(filters_tab, "Filtros")
         tabs.addTab(advanced_tab, "Avançado")
+        tabs.addTab(code_tab, "Editor (.conf / JSON)")
+        tabs.currentChanged.connect(self._tab_changed)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel | QDialogButtonBox.Save)
         _clear_button_icons(buttons)
@@ -186,6 +246,8 @@ class JobFormDialog(QDialog):
         schedule_time = self.schedule_edit.text().strip() if self.schedule_check.isChecked() else None
         patterns = [line.strip() for line in self.ignore_edit.toPlainText().splitlines() if line.strip()]
         include_patterns = [line.strip() for line in self.include_edit.toPlainText().splitlines() if line.strip()]
+        flags_text = self.extra_flags_edit.text().strip()
+        extra_flags = [f.strip() for f in shlex.split(flags_text) if f.strip()] if flags_text else []
         return Job(
             id=self.job.id if self.job else None,
             name=self.name_edit.text().strip(),
@@ -206,6 +268,7 @@ class JobFormDialog(QDialog):
             notify=self.notify_check.isChecked(),
             ignore_patterns=patterns,
             include_patterns=include_patterns,
+            extra_flags=extra_flags,
             created_at=self.job.created_at if self.job else None,
             updated_at=self.job.updated_at if self.job else None,
         )
@@ -236,6 +299,97 @@ class JobFormDialog(QDialog):
         self.ignore_enabled_check.setChecked(bool(job.ignore_patterns))
         self.ignore_edit.setPlainText("\n".join(job.ignore_patterns))
         self.ignore_edit.setEnabled(bool(job.ignore_patterns))
+        if hasattr(job, "extra_flags") and job.extra_flags:
+            self.extra_flags_edit.setText(" ".join(job.extra_flags))
+        else:
+            self.extra_flags_edit.setText("")
+
+    def _append_extra_flag(self, flag: str) -> None:
+        current = self.extra_flags_edit.text().strip()
+        if flag not in current:
+            self.extra_flags_edit.setText(f"{current} {flag}".strip())
+
+    def _tab_changed(self, index: int) -> None:
+        if self.tabs.tabText(index) == "Editor (.conf / JSON)":
+            if not self.code_edit.toPlainText().strip():
+                self._sync_code_from_form()
+
+    def _on_code_format_changed(self) -> None:
+        self._sync_code_from_form()
+
+    def _sync_code_from_form(self) -> None:
+        try:
+            job = self.result_job()
+            fmt = self.code_format_combo.currentText()
+            if fmt == "JSON":
+                self.code_edit.setPlainText(dump_json_text([job]))
+            else:
+                self.code_edit.setPlainText(dump_conf_text([job]))
+            self.code_status_label.setText("✓ Código atualizado a partir do formulário.")
+            self.code_status_label.setStyleSheet("color: #2e7d32; font-weight: bold;")
+        except Exception as exc:
+            self.code_status_label.setText(f"Erro ao gerar código: {exc}")
+            self.code_status_label.setStyleSheet("color: #c62828;")
+
+    def _apply_code_to_form(self) -> bool:
+        text = self.code_edit.toPlainText().strip()
+        if not text:
+            return False
+        fmt = self.code_format_combo.currentText()
+        try:
+            if fmt == "JSON":
+                jobs = parse_json_text(text)
+            else:
+                jobs = parse_conf_text(text)
+            if not jobs:
+                raise ValueError("Nenhuma regra encontrada no código.")
+            job = jobs[0]
+            if self.job and self.job.id:
+                job.id = self.job.id
+            self._load_job(job)
+            self.code_status_label.setText("✓ Código aplicado no formulário com sucesso!")
+            self.code_status_label.setStyleSheet("color: #2e7d32; font-weight: bold;")
+            return True
+        except Exception as exc:
+            self.code_status_label.setText(f"✗ Erro no código: {exc}")
+            self.code_status_label.setStyleSheet("color: #c62828;")
+            return False
+
+    def _import_code_file(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Importar Regra de Arquivo",
+            "",
+            "Arquivos de Regras (*.conf *.json);;Arquivos .CONF (*.conf);;Arquivos JSON (*.json);;Todos (*)",
+        )
+        if path:
+            try:
+                p = Path(path)
+                content = p.read_text(encoding="utf-8")
+                if p.suffix.lower() == ".json":
+                    self.code_format_combo.setCurrentText("JSON")
+                else:
+                    self.code_format_combo.setCurrentText(".CONF (INI)")
+                self.code_edit.setPlainText(content)
+                self._apply_code_to_form()
+            except Exception as exc:
+                QMessageBox.warning(self, "Erro ao importar", str(exc))
+
+    def _export_code_file(self) -> None:
+        fmt = self.code_format_combo.currentText()
+        ext = ".json" if fmt == "JSON" else ".conf"
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Salvar Regra em Arquivo",
+            f"{self.name_edit.text().strip() or 'regra'}{ext}",
+            f"Arquivo {fmt} (*{ext})",
+        )
+        if path:
+            try:
+                Path(path).write_text(self.code_edit.toPlainText(), encoding="utf-8")
+                QMessageBox.information(self, "Sucesso", f"Regra salva com sucesso em:\n{path}")
+            except Exception as exc:
+                QMessageBox.warning(self, "Erro ao salvar", str(exc))
 
     def _browse_local_path(self) -> None:
         directory = QFileDialog.getExistingDirectory(self, "Selecionar pasta local", self.local_edit.text())
@@ -273,6 +427,9 @@ class JobFormDialog(QDialog):
         target.setPlainText("\n".join(merged))
 
     def _accept_with_validation(self) -> None:
+        if self.tabs.tabText(self.tabs.currentIndex()) == "Editor (.conf / JSON)":
+            if not self._apply_code_to_form():
+                return
         try:
             job = self.result_job()
             self._validate(job)

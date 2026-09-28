@@ -1,5 +1,5 @@
-from __future__ import annotations
-
+import json
+import shlex
 import sqlite3
 from collections.abc import Iterable
 from datetime import datetime
@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     dry_run INTEGER DEFAULT 0,
     priority_low INTEGER DEFAULT 1,
     notify INTEGER DEFAULT 1,
+    extra_flags TEXT DEFAULT '',
     created_at TEXT,
     updated_at TEXT
 );
@@ -104,8 +105,8 @@ class Database:
                 INSERT INTO jobs (
                     name, enabled, run_on_startup, local_path, remote_path, mode, direction, realtime,
                     schedule_time, debounce_seconds, transfers, checkers,
-                    bandwidth_limit, dry_run, priority_low, notify, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    bandwidth_limit, dry_run, priority_low, notify, extra_flags, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     job.name,
@@ -124,6 +125,7 @@ class Database:
                     int(job.dry_run),
                     int(job.priority_low),
                     int(job.notify),
+                    json.dumps(job.extra_flags) if job.extra_flags else "",
                     created_at,
                     created_at,
                 ),
@@ -145,7 +147,7 @@ class Database:
                 SET name = ?, enabled = ?, run_on_startup = ?, local_path = ?, remote_path = ?, mode = ?,
                     direction = ?, realtime = ?, schedule_time = ?, debounce_seconds = ?, transfers = ?,
                     checkers = ?, bandwidth_limit = ?, dry_run = ?, priority_low = ?,
-                    notify = ?, updated_at = ?
+                    notify = ?, extra_flags = ?, updated_at = ?
                 WHERE id = ?
                 """,
                 (
@@ -165,6 +167,7 @@ class Database:
                     int(job.dry_run),
                     int(job.priority_low),
                     int(job.notify),
+                    json.dumps(job.extra_flags) if job.extra_flags else "",
                     now_iso(),
                     job.id,
                 ),
@@ -396,6 +399,18 @@ class Database:
                 (row["id"],),
             )
         ]
+        extra_flags_raw = row["extra_flags"] if "extra_flags" in row.keys() else ""
+        extra_flags: list[str] = []
+        if extra_flags_raw:
+            try:
+                parsed = json.loads(extra_flags_raw)
+                if isinstance(parsed, list):
+                    extra_flags = [str(x) for x in parsed]
+                elif isinstance(parsed, str):
+                    extra_flags = shlex.split(parsed) if " " in parsed else [parsed]
+            except (json.JSONDecodeError, TypeError):
+                extra_flags = shlex.split(extra_flags_raw) if " " in extra_flags_raw else [extra_flags_raw]
+
         return Job(
             id=row["id"],
             name=row["name"],
@@ -416,6 +431,7 @@ class Database:
             notify=bool(row["notify"]),
             ignore_patterns=ignore_patterns,
             include_patterns=include_patterns,
+            extra_flags=extra_flags,
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
@@ -470,6 +486,8 @@ class Database:
             conn.execute("ALTER TABLE jobs ADD COLUMN direction TEXT DEFAULT 'local_to_remote'")
         if "run_on_startup" not in columns:
             conn.execute("ALTER TABLE jobs ADD COLUMN run_on_startup INTEGER DEFAULT 0")
+        if "extra_flags" not in columns:
+            conn.execute("ALTER TABLE jobs ADD COLUMN extra_flags TEXT DEFAULT ''")
 
 
 def init_default_database() -> Database:

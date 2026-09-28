@@ -57,6 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--no-low-priority", action="store_true")
     add.add_argument("--no-notify", action="store_true")
     add.add_argument("--ignore", action="append", default=[])
+    add.add_argument("--flags", action="append", default=[], help="custom rclone flags")
 
     run = sub.add_parser("run", help="run sync now")
     target = run.add_mutually_exclusive_group(required=True)
@@ -99,6 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             priority_low=not args.no_low_priority,
             notify=not args.no_notify,
             ignore_patterns=args.ignore,
+            extra_flags=args.flags,
         )
         created = db.create_job(job)
         print(f"Created job {created.name}")
@@ -166,12 +168,47 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Removed {removed} stale lock(s).")
         return 0
     if args.command == "export-jobs":
+        p = Path(args.path)
+        if p.suffix.lower() == ".conf":
+            from .rules_manager import dump_conf_text
+
+            jobs = db.list_jobs()
+            p.write_text(dump_conf_text(jobs), encoding="utf-8")
+            print(f"Exported {len(jobs)} job(s) to {args.path}")
+            return 0
         from .jobs_io import export_jobs
 
         count = export_jobs(db, args.path)
         print(f"Exported {count} job(s) to {args.path}")
         return 0
     if args.command == "import-jobs":
+        p = Path(args.path)
+        if p.is_dir():
+            from .rules_manager import load_rules_directory
+
+            jobs = load_rules_directory(p)
+            for j in jobs:
+                existing = db.get_job(j.name)
+                if existing:
+                    j.id = existing.id
+                    db.update_job(j)
+                else:
+                    db.create_job(j)
+            print(f"Imported {len(jobs)} job(s) from directory {args.path}")
+            return 0
+        if p.suffix.lower() == ".conf":
+            from .rules_manager import parse_conf_text
+
+            jobs = parse_conf_text(p.read_text(encoding="utf-8"))
+            for j in jobs:
+                existing = db.get_job(j.name)
+                if existing:
+                    j.id = existing.id
+                    db.update_job(j)
+                else:
+                    db.create_job(j)
+            print(f"Imported {len(jobs)} job(s) from {args.path}")
+            return 0
         from .jobs_io import import_jobs
 
         count = import_jobs(db, args.path, overwrite=True)

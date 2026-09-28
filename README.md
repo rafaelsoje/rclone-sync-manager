@@ -229,9 +229,11 @@ No Windows, pelo repositório:
 Na interface você pode:
 
 - adicionar, editar, remover, pausar, retomar e executar jobs;
+- configurar regras visualmente ou via código com editor integrado para formatos **JSON** e **.CONF (INI)**;
+- definir **flags customizadas do `rclone`** por tarefa (ex: `--fast-list`, `--drive-skip-gdocs`, `--drive-chunk-size 64M`, etc.);
+- exportar e importar jobs em arquivos `.json` e `.conf` (incluindo carregamento de diretórios de regras);
 - abrir logs;
 - copiar diagnóstico do job, incluindo comando, status, último erro e trecho final do log;
-- exportar e importar jobs em JSON;
 - navegar pelos remotes do `rclone`;
 - copiar o comando `rclone` de um job;
 - diagnosticar dependências com o botão `Doctor`;

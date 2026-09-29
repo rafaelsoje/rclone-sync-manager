@@ -96,7 +96,25 @@ class LockManager:
                     removed += 1
                 except OSError:
                     continue
+        removed += cleanup_stale_bisync_locks()
         return removed
+
+
+def cleanup_stale_bisync_locks() -> int:
+    cache_dir = Path.home() / ".cache" / "rclone" / "bisync"
+    if not cache_dir.exists():
+        return 0
+    removed = 0
+    for lck_file in cache_dir.glob("*.lck"):
+        try:
+            data = json.loads(lck_file.read_text(encoding="utf-8"))
+            pid = int(data.get("PID", 0))
+            if pid and not pid_exists(pid):
+                lck_file.unlink(missing_ok=True)
+                removed += 1
+        except Exception:
+            pass
+    return removed
 
 
 def pid_exists(pid: int) -> bool:

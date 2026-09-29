@@ -178,9 +178,12 @@ class Database:
                 self._set_job_state(conn, job.id, "paused", None)
         return self.get_job(job.name)  # type: ignore[return-value]
 
-    def delete_job(self, name: str) -> None:
+    def delete_job(self, name_or_id: str | int) -> None:
         with self.connect() as conn:
-            conn.execute("DELETE FROM jobs WHERE name = ?", (name,))
+            if isinstance(name_or_id, int):
+                conn.execute("DELETE FROM jobs WHERE id = ?", (name_or_id,))
+            else:
+                conn.execute("DELETE FROM jobs WHERE name = ?", (str(name_or_id),))
 
     def get_job(self, name: str) -> Job | None:
         with self.connect() as conn:

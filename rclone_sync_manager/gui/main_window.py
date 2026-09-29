@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         self.db.initialize()
         self.locks = LockManager()
         self.locks.cleanup_stale_locks()
+        self.tray = None
         self._reconcile_runtime_state()
         self._threads: list[RunJobThread] = []
         self._refreshing = False
@@ -351,6 +352,8 @@ class MainWindow(QMainWindow):
         self._update_summary(jobs)
         self._update_buttons()
         self._update_details()
+        if getattr(self, "tray", None) is not None:
+            self.tray.update_status()
 
     def add_job(self) -> None:
         dialog = JobFormDialog(self)

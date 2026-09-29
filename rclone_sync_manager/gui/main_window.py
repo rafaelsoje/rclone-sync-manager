@@ -372,8 +372,44 @@ class MainWindow(QMainWindow):
         dialog = JobFormDialog(self, job)
         if dialog.exec() != JobFormDialog.Accepted:
             return
+        new_job = dialog.result_job()
+        old_path = Path(job.local_path).resolve()
+        new_path = Path(new_job.local_path).resolve()
+
+        if old_path != new_path:
+            old_has_files = old_path.exists() and any(old_path.iterdir())
+            move_files = True
+            if old_has_files:
+                reply = QMessageBox.question(
+                    self,
+                    "Mover arquivos existentes?",
+                    f"Você alterou o diretório local da tarefa de:\n{old_path}\npara:\n{new_path}\n\n"
+                    "Deseja mover os arquivos já existentes para o novo local com segurança?",
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                    QMessageBox.Yes,
+                )
+                if reply == QMessageBox.Cancel:
+                    return
+                move_files = (reply == QMessageBox.Yes)
+
+            from ..relocate import relocate_job_path
+
+            try:
+                ok, msg = relocate_job_path(self.db, job, new_path, move_files=move_files)
+                new_job.local_path = str(new_path)
+                self.db.update_job(new_job)
+                if not ok:
+                    QMessageBox.warning(self, "Aviso de sincronização", msg)
+                else:
+                    QMessageBox.information(self, "Sucesso", f"Diretório atualizado para:\n{new_path}")
+            except Exception as exc:
+                QMessageBox.warning(self, "Erro na realocação", str(exc))
+                return
+            self.refresh()
+            return
+
         try:
-            self.db.update_job(dialog.result_job())
+            self.db.update_job(new_job)
         except Exception as exc:
             QMessageBox.warning(self, "Não foi possível salvar", str(exc))
             return

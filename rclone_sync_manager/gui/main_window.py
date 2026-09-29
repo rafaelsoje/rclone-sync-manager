@@ -372,44 +372,8 @@ class MainWindow(QMainWindow):
         dialog = JobFormDialog(self, job)
         if dialog.exec() != JobFormDialog.Accepted:
             return
-        new_job = dialog.result_job()
-        old_path = Path(job.local_path).resolve()
-        new_path = Path(new_job.local_path).resolve()
-
-        if old_path != new_path:
-            old_has_files = old_path.exists() and any(old_path.iterdir())
-            move_files = True
-            if old_has_files:
-                reply = QMessageBox.question(
-                    self,
-                    "Mover arquivos existentes?",
-                    f"Você alterou o diretório local da tarefa de:\n{old_path}\npara:\n{new_path}\n\n"
-                    "Deseja mover os arquivos já existentes para o novo local com segurança?",
-                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                    QMessageBox.Yes,
-                )
-                if reply == QMessageBox.Cancel:
-                    return
-                move_files = (reply == QMessageBox.Yes)
-
-            from ..relocate import relocate_job_path
-
-            try:
-                ok, msg = relocate_job_path(self.db, job, new_path, move_files=move_files)
-                new_job.local_path = str(new_path)
-                self.db.update_job(new_job)
-                if not ok:
-                    QMessageBox.warning(self, "Aviso de sincronização", msg)
-                else:
-                    QMessageBox.information(self, "Sucesso", f"Diretório atualizado para:\n{new_path}")
-            except Exception as exc:
-                QMessageBox.warning(self, "Erro na realocação", str(exc))
-                return
-            self.refresh()
-            return
-
         try:
-            self.db.update_job(new_job)
+            self.db.update_job(dialog.result_job())
         except Exception as exc:
             QMessageBox.warning(self, "Não foi possível salvar", str(exc))
             return
@@ -524,23 +488,29 @@ class MainWindow(QMainWindow):
                 QMessageBox.Cancel,
             ) != QMessageBox.Ok:
                 return
+        resync = False
         if job.mode == "bisync":
-            if QMessageBox.warning(
-                self,
-                "Bisync",
-                "Use rsm init-bisync --job no terminal para a primeira execução com --resync.",
-                QMessageBox.Cancel | QMessageBox.Ok,
-                QMessageBox.Cancel,
-            ) != QMessageBox.Ok:
-                return
-        self._start_job_thread(job)
+            initialized = self.db.get_setting(f"bisync_initialized:{job.id}", "false") == "true"
+            if not initialized:
+                reply = QMessageBox.question(
+                    self,
+                    "Inicializar Bisync",
+                    f"A tarefa '{job.name}' é bidirecional (bisync) e precisa ser inicializada pela primeira vez com --resync.\n\n"
+                    "Deseja executar a primeira sincronização agora?",
+                    QMessageBox.Yes | QMessageBox.Cancel,
+                    QMessageBox.Yes,
+                )
+                if reply != QMessageBox.Yes:
+                    return
+                resync = True
+        self._start_job_thread(job, resync=resync)
 
-    def _start_job_thread(self, job: Job) -> None:
+    def _start_job_thread(self, job: Job, resync: bool = False) -> None:
         self.run_button.setEnabled(False)
         if job.id is not None:
             self.db.set_job_status(job.id, JobStatus.RUNNING.value)
         self.refresh()
-        thread = RunJobThread(job, self.db)
+        thread = RunJobThread(job, self.db, resync=resync)
         thread.finished_run.connect(self._job_run_finished)
         thread.finished.connect(lambda: self._threads.remove(thread) if thread in self._threads else None)
         self._threads.append(thread)
@@ -671,6 +641,9 @@ class MainWindow(QMainWindow):
         job = self.selected_job()
         menu = QMenu(self)
         sync_action = menu.addAction("Sincronizar agora")
+        init_bisync_action = None
+        if job and job.mode == "bisync":
+            init_bisync_action = menu.addAction("Inicializar Bisync (--resync)")
         stop_action = menu.addAction("Parar")
         menu.addSeparator()
         edit_action = menu.addAction("Editar")
@@ -687,6 +660,8 @@ class MainWindow(QMainWindow):
         action = menu.exec(self.table.viewport().mapToGlobal(position))
         if action == sync_action:
             self.run_selected_job()
+        elif init_bisync_action and action == init_bisync_action:
+            self._start_job_thread(job, resync=True)
         elif action == stop_action:
             self.stop_job()
         elif action == edit_action:

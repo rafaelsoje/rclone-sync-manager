@@ -71,12 +71,6 @@ def build_parser() -> argparse.ArgumentParser:
         command = sub.add_parser(name)
         command.add_argument("--job", required=True)
 
-    relocate = sub.add_parser("relocate-job", help="safely move a job's local folder to a new path")
-    relocate.add_argument("--job", required=True)
-    relocate.add_argument("--to", required=True, help="new local path")
-    relocate.add_argument("--no-move", action="store_true", help="do not move existing files, only change path")
-    relocate.add_argument("--no-resync", action="store_true", help="do not run bisync --resync automatically")
-
     return parser
 
 
@@ -150,19 +144,6 @@ def main(argv: list[str] | None = None) -> int:
         db.delete_job(job.id)
         print(f"Removed job {job.name}")
         return 0
-    if args.command == "relocate-job":
-        from .relocate import relocate_job_path
-
-        job = require_job(db, args.job)
-        ok, msg = relocate_job_path(
-            db,
-            job,
-            args.to,
-            move_files=not args.no_move,
-            resync_bisync=not args.no_resync,
-        )
-        print(msg)
-        return 0 if ok else 1
     if args.command == "logs":
         job = require_job(db, args.job)
         log_file = paths.job_log_dir / f"{safe_filename(job.name)}.log"

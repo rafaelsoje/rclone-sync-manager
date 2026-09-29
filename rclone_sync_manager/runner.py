@@ -116,6 +116,9 @@ class RcloneRunner:
         )
         error_message = None
         exit_code = 1
+        if job.mode == "bisync":
+            from .lock_manager import cleanup_stale_bisync_locks
+            cleanup_stale_bisync_locks()
         try:
             self.db.set_job_status(job.id, JobStatus.RUNNING.value)
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

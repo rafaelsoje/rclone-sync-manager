@@ -152,8 +152,8 @@ class TrayIcon(QSystemTrayIcon):
                     last_error_job = job
 
             last_run = db.get_last_job_run(job.id) if job.id else None
-            if last_run and last_run.get("finished_at"):
-                t = last_run["finished_at"]
+            if last_run and last_run["finished_at"]:
+                t = str(last_run["finished_at"])
                 if not last_finished_at or t > last_finished_at:
                     last_finished_at = t
 

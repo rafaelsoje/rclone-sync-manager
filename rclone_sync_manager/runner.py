@@ -120,7 +120,6 @@ class RcloneRunner:
             self.db.set_job_status(job.id, JobStatus.RUNNING.value)
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             self.locks.create_lock(job, pid=process.pid)
-            self._notify(job, "Sincronização iniciada", f"{job.name} está rodando.")
             stdout, stderr = process.communicate()
             completed = subprocess.CompletedProcess(command, process.returncode, stdout=stdout, stderr=stderr)
             exit_code = completed.returncode
@@ -145,13 +144,11 @@ class RcloneRunner:
             self.db.set_job_status(job.id, status, error_message)
             if job.mode == "bisync" and resync and exit_code == 0:
                 self.db.set_setting(f"bisync_initialized:{job.id}", "true")
-            if exit_code == 0:
-                self._notify(job, "Sincronização concluída", f"{job.name} finalizado com sucesso.")
-            elif status == JobStatus.STOPPED.value:
-                self._notify(job, "Sincronização parada", f"{job.name} foi interrompido.")
-            else:
+            if exit_code != 0 and status != JobStatus.STOPPED.value:
                 detail = error_message or f"rclone retornou código {exit_code}"
-                self._notify(job, "Erro de sincronização", f"{job.name}: {detail}")
+                self._notify(job, "Erro de sincronização", f"{job.name}: {detail}", is_error=True)
+            elif self.db.get_setting("notify_success", "false") == "true":
+                self._notify(job, "Sincronização concluída", f"{job.name} finalizado com sucesso.")
             self.locks.remove_lock(job)
 
         return RunResult(
@@ -162,10 +159,13 @@ class RcloneRunner:
             error_message=error_message,
         )
 
-    def _notify(self, job: Job, title: str, message: str) -> None:
+    def _notify(self, job: Job, title: str, message: str, is_error: bool = False) -> None:
         notifications_enabled = self.db.get_setting("notifications", "true") == "true"
-        if job.notify and notifications_enabled:
-            notify(title, message)
+        if not notifications_enabled:
+            return
+        if not job.notify:
+            return
+        notify(title, message)
 
 
 def _status_from_exit_code(exit_code: int) -> str:

@@ -177,15 +177,19 @@ def test_remote_to_local_creates_missing_local_directory(tmp_path: Path) -> None
     assert local_path.is_dir()
 
 
-def test_local_to_remote_requires_existing_local_directory(tmp_path: Path) -> None:
+def test_bisync_creates_missing_local_directory(tmp_path: Path) -> None:
     db = Database(tmp_path / "rsm.db")
     db.initialize()
-    local_path = tmp_path / "missing"
+    local_path = tmp_path / "missing" / "bisync_folder"
 
-    try:
-        db.create_job(Job(name="Upload", local_path=str(local_path), remote_path="dropbox:Upload"))
-    except ValueError as exc:
-        assert "local path is not a directory" in str(exc)
-    else:
-        raise AssertionError("expected missing local source to fail")
-    assert not local_path.exists()
+    db.create_job(
+        Job(
+            name="BisyncJob",
+            local_path=str(local_path),
+            remote_path="drive:Folder",
+            mode="bisync",
+        )
+    )
+
+    assert local_path.is_dir()
+

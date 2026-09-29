@@ -43,6 +43,7 @@ def import_jobs(db: Database, path: str | Path, *, overwrite: bool = True) -> in
     imported = 0
     for raw_job in payload.get("jobs", []):
         job = _job_from_dict(raw_job)
+        Path(job.local_path).mkdir(parents=True, exist_ok=True)
         existing = db.get_job(job.name)
         if existing is not None:
             if not overwrite:

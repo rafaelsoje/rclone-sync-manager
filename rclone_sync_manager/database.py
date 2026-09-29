@@ -125,7 +125,7 @@ class Database:
                     int(job.dry_run),
                     int(job.priority_low),
                     int(job.notify),
-                    json.dumps(job.extra_flags) if getattr(job, "extra_flags", None) else "",
+                    json.dumps(job.extra_flags) if job.extra_flags else "",
                     created_at,
                     created_at,
                 ),
@@ -167,7 +167,7 @@ class Database:
                     int(job.dry_run),
                     int(job.priority_low),
                     int(job.notify),
-                    json.dumps(job.extra_flags) if getattr(job, "extra_flags", None) else "",
+                    json.dumps(job.extra_flags) if job.extra_flags else "",
                     now_iso(),
                     job.id,
                 ),
@@ -458,8 +458,11 @@ class Database:
         if not job.name.strip():
             raise ValueError("job name is required")
         local_path = Path(job.local_path)
-        if job.direction == "remote_to_local":
-            local_path.mkdir(parents=True, exist_ok=True)
+        if job.direction == "remote_to_local" or job.mode == "bisync":
+            try:
+                local_path.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                raise ValueError(f"failed to create local directory {job.local_path}: {exc}") from exc
         if not local_path.is_dir():
             raise ValueError(f"local path is not a directory: {job.local_path}")
         if not job.remote_path.strip():

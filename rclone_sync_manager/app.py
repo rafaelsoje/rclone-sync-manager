@@ -72,6 +72,12 @@ def run_gui(*, start_hidden: bool = False) -> int:
         return 0
     app.instance_lock = instance_lock
 
+    locks = LockManager()
+    locks.cleanup_stale_locks()
+    db.reconcile_interrupted_jobs(
+        job.id for job in db.list_jobs() if job.id is not None and locks.is_locked(job)
+    )
+
     max_parallel = int(db.get_setting("max_parallel_jobs", "1") or "1")
     queue_manager = QueueManager(db=db, max_parallel=max_parallel)
     queue_manager.start()

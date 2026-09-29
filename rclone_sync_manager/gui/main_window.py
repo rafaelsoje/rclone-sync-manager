@@ -76,7 +76,6 @@ class MainWindow(QMainWindow):
         self.locks = LockManager()
         self.locks.cleanup_stale_locks()
         self.tray = None
-        self._reconcile_runtime_state()
         self._threads: list[RunJobThread] = []
         self._refreshing = False
         self._all_jobs: list[Job] = []
@@ -305,7 +304,6 @@ class MainWindow(QMainWindow):
 
     def refresh(self) -> None:
         self.locks.cleanup_stale_locks()
-        self._reconcile_runtime_state()
         selected_name = self.selected_job_name()
         self._refreshing = True
         jobs = self.db.list_jobs()

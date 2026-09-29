@@ -159,3 +159,27 @@ def test_friendly_error_message_for_missing_directory() -> None:
 
     assert message is not None
     assert "Diretório não encontrado" in message
+
+
+def test_run_creates_local_directory_if_missing(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    db = Database(tmp_path / "rsm.db")
+    db.initialize()
+    missing_dir = tmp_path / "nested" / "auto_created"
+    assert not missing_dir.exists()
+    job = db.create_job(
+        Job(
+            name="AutoDir",
+            local_path=str(missing_dir),
+            remote_path="gdrive:AutoDir",
+            mode="copy",
+            dry_run=True,
+        )
+    )
+
+    runner = RcloneRunner(db=db, rclone_path="rclone")
+    runner.run(job)
+
+    assert missing_dir.is_dir()
+

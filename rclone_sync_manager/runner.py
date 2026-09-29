@@ -96,6 +96,12 @@ class RcloneRunner:
             raise ValueError("job must be persisted before running")
         if not job.enabled:
             raise RuntimeError(f"job is disabled: {job.name}")
+        local_path = Path(job.local_path)
+        if not local_path.exists():
+            try:
+                local_path.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                raise RuntimeError(f"failed to create local directory {local_path}: {exc}") from exc
         if job.mode == "bisync" and not resync:
             initialized = self.db.get_setting(f"bisync_initialized:{job.id}", "false")
             if initialized != "true":

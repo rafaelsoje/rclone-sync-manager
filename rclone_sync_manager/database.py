@@ -461,7 +461,7 @@ class Database:
         if not job.name.strip():
             raise ValueError("job name is required")
         local_path = Path(job.local_path)
-        if job.direction == "remote_to_local" or job.mode == "bisync":
+        if job.direction == "remote_to_local" or job.mode == "bisync" or not local_path.exists():
             try:
                 local_path.mkdir(parents=True, exist_ok=True)
             except OSError as exc:

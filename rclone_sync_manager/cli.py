@@ -67,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_bisync = sub.add_parser("init-bisync", help="run first bisync with --resync")
     init_bisync.add_argument("--job", required=True)
 
-    for name in ("pause", "resume", "logs"):
+    for name in ("pause", "resume", "logs", "remove-job"):
         command = sub.add_parser(name)
         command.add_argument("--job", required=True)
 
@@ -138,6 +138,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "resume":
         db.set_job_enabled(args.job, True)
         print(f"Resumed {args.job}")
+        return 0
+    if args.command == "remove-job":
+        job = require_job(db, args.job)
+        db.delete_job(job.id)
+        print(f"Removed job {job.name}")
         return 0
     if args.command == "logs":
         job = require_job(db, args.job)

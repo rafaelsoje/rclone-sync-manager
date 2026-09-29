@@ -83,9 +83,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Initialized Rclone Sync Manager at {paths.data_dir}")
         return 0
     if args.command == "add-job":
+        local_dir = Path(args.local).expanduser()
+        local_dir.mkdir(parents=True, exist_ok=True)
         job = Job(
             name=args.name,
-            local_path=str(Path(args.local).expanduser()),
+            local_path=str(local_dir),
             remote_path=args.remote,
             mode=args.mode,
             direction=args.direction.replace("-", "_"),
@@ -188,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
 
             jobs = load_rules_directory(p)
             for j in jobs:
+                Path(j.local_path).mkdir(parents=True, exist_ok=True)
                 existing = db.get_job(j.name)
                 if existing:
                     j.id = existing.id
@@ -201,6 +204,7 @@ def main(argv: list[str] | None = None) -> int:
 
             jobs = parse_conf_text(p.read_text(encoding="utf-8"))
             for j in jobs:
+                Path(j.local_path).mkdir(parents=True, exist_ok=True)
                 existing = db.get_job(j.name)
                 if existing:
                     j.id = existing.id

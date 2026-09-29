@@ -465,11 +465,11 @@ class JobFormDialog(QDialog):
         if not job.name:
             raise ValueError("Nome obrigatório.")
         local_path = Path(job.local_path)
-        if job.direction == "remote_to_local":
+        if job.direction == "remote_to_local" or job.mode == "bisync" or not local_path.exists():
             try:
                 local_path.mkdir(parents=True, exist_ok=True)
             except OSError as exc:
-                raise ValueError(f"Nao foi possivel criar a pasta local: {exc}") from exc
+                raise ValueError(f"Não foi possível criar a pasta local: {exc}") from exc
         if not local_path.is_dir():
             raise ValueError("A pasta local precisa existir e ser uma pasta.")
         if not job.remote_path:

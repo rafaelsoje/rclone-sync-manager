@@ -85,3 +85,36 @@ def test_queue_skips_deleted_job(tmp_path: Path, monkeypatch) -> None:
     manager.stop()
 
     assert not fake_runner.called
+
+
+def test_mark_pending_preserves_running_status(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    db = Database(tmp_path / "rsm.db")
+    db.initialize()
+    job = db.create_job(Job(name="Docs", local_path=str(tmp_path), remote_path="gdrive:Docs"))
+    db.set_job_status(job.id, JobStatus.RUNNING.value)
+
+    manager = QueueManager(db=db)
+    with manager._lock:
+        manager._running.add(job.name)
+
+    manager.mark_pending(job)
+    assert db.get_job_status_text(job.id) == JobStatus.RUNNING.value
+
+
+def test_enqueue_preserves_running_status(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    db = Database(tmp_path / "rsm.db")
+    db.initialize()
+    job = db.create_job(Job(name="Docs", local_path=str(tmp_path), remote_path="gdrive:Docs"))
+    db.set_job_status(job.id, JobStatus.RUNNING.value)
+
+    manager = QueueManager(db=db)
+    with manager._lock:
+        manager._running.add(job.name)
+
+    manager.enqueue(job)
+    assert db.get_job_status_text(job.id) == JobStatus.RUNNING.value
+

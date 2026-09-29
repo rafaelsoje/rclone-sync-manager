@@ -35,19 +35,21 @@ class QueueManager:
             worker.join(timeout=2)
 
     def enqueue(self, job: Job) -> None:
-        if job.id is not None:
-            self.db.set_job_status(job.id, JobStatus.PENDING.value)
         with self._lock:
             if job.name in self._running:
                 self._pending.add(job.name)
                 return
+        if job.id is not None:
+            self.db.set_job_status(job.id, JobStatus.PENDING.value)
         self._queue.put(job)
 
     def mark_pending(self, job: Job) -> None:
-        if job.id is not None:
-            self.db.set_job_status(job.id, JobStatus.PENDING.value)
         with self._lock:
             self._pending.add(job.name)
+            if job.name in self._running:
+                return
+        if job.id is not None:
+            self.db.set_job_status(job.id, JobStatus.PENDING.value)
 
     def is_running(self, job: Job | str) -> bool:
         name = job.name if isinstance(job, Job) else job
@@ -72,6 +74,9 @@ class QueueManager:
                 if job.id is not None:
                     fresh_job = self.db.get_job_by_id(job.id)
                     if fresh_job is None:
+                        continue
+                    if not fresh_job.enabled:
+                        self.db.set_job_status(job.id, JobStatus.PAUSED.value)
                         continue
                     job = fresh_job
                     self.db.set_job_status(job.id, JobStatus.RUNNING.value)

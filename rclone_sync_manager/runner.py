@@ -133,7 +133,10 @@ class RcloneRunner:
             completed = subprocess.CompletedProcess(command, process.returncode, stdout=stdout, stderr=stderr)
             exit_code = completed.returncode
             if completed.returncode != 0:
-                error_message = _friendly_error_message((completed.stderr or completed.stdout).strip())
+                raw_error = (completed.stderr or completed.stdout).strip()
+                if not raw_error and log_file.exists():
+                    raw_error = _extract_last_error_from_log(log_file)
+                error_message = _friendly_error_message(raw_error)
         except FileNotFoundError as exc:
             error_message = str(exc)
             exit_code = 127
@@ -212,4 +215,24 @@ def _friendly_error_message(message: str | None) -> str | None:
         return f"Falha de autenticação/permissão no remote. Talvez seja preciso reconectar com rclone config.\n\n{message}"
     if "rate limit" in lowered or "too many requests" in lowered or "quota" in lowered:
         return f"Limite do provedor atingido. Tente reduzir transfers/checkers ou aguardar.\n\n{message}"
+    if "cannotdownloadabusivefile" in lowered or "drive-acknowledge-abuse" in lowered:
+        return (
+            "O Google Drive bloqueou o download de arquivo identificado como suspeito ou malware "
+            "(ex: scripts, executáveis .exe antigos).\n"
+            "A flag '--drive-acknowledge-abuse' foi adicionada às flags extras do job para permitir a sincronização.\n\n"
+            f"{message}"
+        )
     return message
+
+
+def _extract_last_error_from_log(log_file: Path, max_lines: int = 60) -> str:
+    if not log_file.exists():
+        return ""
+    try:
+        lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
+        errors = [line for line in lines[-max_lines:] if "ERROR :" in line or "critical error" in line.lower()]
+        if errors:
+            return "\n".join(errors[-3:])
+        return "\n".join(lines[-5:])
+    except Exception:
+        return ""

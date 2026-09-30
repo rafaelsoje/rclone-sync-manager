@@ -134,7 +134,7 @@ class JobFormDialog(QDialog):
         self.extra_flags_edit.setPlaceholderText("Ex: --drive-skip-gdocs --fast-list --drive-chunk-size 64M")
 
         flags_helpers = QHBoxLayout()
-        for flag in ["--drive-skip-gdocs", "--fast-list", "--drive-chunk-size 64M", "--resilient", "--bwlimit 10M"]:
+        for flag in ["--drive-skip-gdocs", "--drive-acknowledge-abuse", "--fast-list", "--drive-chunk-size 64M", "--resilient", "--bwlimit 10M"]:
             btn = QPushButton(f"+ {flag}")
             btn.setStyleSheet("font-size: 11px; padding: 2px 5px;")
             btn.clicked.connect(lambda checked=False, f=flag: self._append_extra_flag(f))

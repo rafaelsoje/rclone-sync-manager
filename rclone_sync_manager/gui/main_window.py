@@ -608,7 +608,11 @@ class MainWindow(QMainWindow):
         self.run_button.setEnabled(True)
         self.refresh()
         if exit_code == 0:
-            QMessageBox.information(self, "Sincronização concluída", f"{job_name} finalizado com sucesso.")
+            job = self.db.get_job(job_name)
+            if job and job.mode == "copy":
+                QMessageBox.information(self, "Cópia concluída", f"{job_name} finalizado com sucesso.")
+            else:
+                self.statusBar().showMessage(f"'{job_name}' sincronizado com sucesso.", 5000)
         elif exit_code in STOPPED_EXIT_CODES:
             QMessageBox.information(self, "Sincronização parada", f"{job_name} foi interrompido.")
         else:

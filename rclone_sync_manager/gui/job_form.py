@@ -131,10 +131,10 @@ class JobFormDialog(QDialog):
         execution_tab.setLayout(execution_form)
 
         self.extra_flags_edit = QLineEdit()
-        self.extra_flags_edit.setPlaceholderText("Ex: --drive-skip-gdocs --fast-list --drive-chunk-size 64M")
+        self.extra_flags_edit.setPlaceholderText("Ex: --drive-export-formats desktop --drive-acknowledge-abuse --fast-list")
 
         flags_helpers = QHBoxLayout()
-        for flag in ["--drive-skip-gdocs", "--drive-acknowledge-abuse", "--fast-list", "--drive-chunk-size 64M", "--resilient", "--bwlimit 10M"]:
+        for flag in ["--drive-export-formats desktop", "--drive-acknowledge-abuse", "--fast-list", "--drive-chunk-size 64M", "--resilient", "--bwlimit 10M"]:
             btn = QPushButton(f"+ {flag}")
             btn.setStyleSheet("font-size: 11px; padding: 2px 5px;")
             btn.clicked.connect(lambda checked=False, f=flag: self._append_extra_flag(f))
@@ -237,6 +237,8 @@ class JobFormDialog(QDialog):
 
         if job:
             self._load_job(job)
+        else:
+            self.extra_flags_edit.setText("--drive-export-formats desktop --drive-acknowledge-abuse")
         self._mode_changed(self.mode_combo.currentText())
 
     def start_after_save(self) -> bool:

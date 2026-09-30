@@ -43,7 +43,9 @@ Type=Application
 Name=Rclone Sync Manager
 Comment=Start Rclone Sync Manager tray at login
 Exec={_desktop_exec_quote(python_executable)} -m rclone_sync_manager gui --start-hidden
+Icon=rclone-sync-manager
 Terminal=false
+StartupNotify=false
 X-GNOME-Autostart-enabled=true
 """
 

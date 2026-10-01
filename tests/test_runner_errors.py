@@ -36,3 +36,12 @@ def test_extract_last_error_from_log(tmp_path) -> None:
     assert "ERROR : file.txt: failed to copy: 403" in result
     assert "ERROR : Fatal error" in result
 
+
+def test_friendly_error_message_for_resync_needed() -> None:
+    message = _friendly_error_message("Bisync critical error: cannot find prior Path1 or Path2 listings. Must run --resync to recover.")
+
+    assert message is not None
+    assert "perdeu os índices de sincronização" in message
+    assert "rsm init-bisync" in message
+
+

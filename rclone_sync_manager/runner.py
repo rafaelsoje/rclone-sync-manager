@@ -121,6 +121,7 @@ class RcloneRunner:
             )
         )
         error_message = None
+        raw_error = ""
         exit_code = 1
         if job.mode == "bisync":
             from .lock_manager import cleanup_stale_bisync_locks
@@ -154,8 +155,14 @@ class RcloneRunner:
                 error_message=error_message,
             )
             self.db.set_job_status(job.id, status, error_message)
-            if job.mode == "bisync" and resync and exit_code == 0:
-                self.db.set_setting(f"bisync_initialized:{job.id}", "true")
+            if job.mode == "bisync":
+                if resync and exit_code == 0:
+                    self.db.set_setting(f"bisync_initialized:{job.id}", "true")
+                elif exit_code != 0 and (
+                    "must run --resync" in (raw_error or "").lower()
+                    or "cannot find prior path" in (raw_error or "").lower()
+                ):
+                    self.db.set_setting(f"bisync_initialized:{job.id}", "false")
             if exit_code != 0 and status != JobStatus.STOPPED.value:
                 detail = error_message or f"rclone retornou código {exit_code}"
                 self._notify(job, "Erro de sincronização", f"{job.name}: {detail}", is_error=True)
@@ -220,6 +227,13 @@ def _friendly_error_message(message: str | None) -> str | None:
             "O Google Drive bloqueou o download de arquivo identificado como suspeito ou malware "
             "(ex: scripts, executáveis .exe antigos).\n"
             "A flag '--drive-acknowledge-abuse' foi adicionada às flags extras do job para permitir a sincronização.\n\n"
+            f"{message}"
+        )
+    if "must run --resync" in lowered or "cannot find prior path" in lowered:
+        return (
+            "O rclone bisync perdeu os índices de sincronização anteriores (devido a interrupção ou conflito) "
+            "e precisa restabelecer a base com --resync.\n"
+            "Reinicialize a tarefa clicando em 'Inicializar bisync' na interface ou executando: rsm init-bisync --job <Nome>.\n\n"
             f"{message}"
         )
     return message
